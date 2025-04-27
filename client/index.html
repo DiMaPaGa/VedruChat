@@ -38,7 +38,7 @@
         
         socket.on('chat message', (msg, serverOffset, username) => {
             const item = `<li>
-                    <p>${msg}</p>
+                    <p>${msg.message}</p>
                     <small>${username}</small>
                 </li>`;
             messages.insertAdjacentHTML('beforeend', item);
@@ -49,8 +49,10 @@
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             if (input.value) {
-                socket.emit('chat message', input.value);
-                input.value = '';
+                socket.emit('chat message', {
+                    message: input.value,
+                    username: socket.auth.username
+                });
             }
         });
 
