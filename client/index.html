@@ -5,9 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VedruChat</title>
 
+    <!-- Script principal para el cliente del chat -->
     <script type="module">
+
+        // Importación de la librería socket.io cliente
         import { io } from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js';
 
+        /**
+         * Obtiene el nombre de usuario del localStorage si existe.
+         * Si no, solicita uno aleatorio desde una API (random.data.api) y lo guarda en localStorage.
+         * @returns {Promise<string>} Nombre de usuario
+         */
         const getUserName= async () => {
             const username = localStorage.getItem('username');
             if (username) {
@@ -16,36 +24,50 @@
                 
             }
 
+            // Solicita un usuario aleatorio de la API
             const res= await fetch('https://random-data-api.com/api/users/random_user');
             const { username: randomUserName} = await res.json();
 
+            // Guarda el nuevo nombre de usuario en localStorage
             localStorage.setItem('username', randomUserName);
             return randomUserName
         }
 
-
+        // Inicializa conexión con el servidor Socket.IO
         const socket = io({
             auth:{
-                username: await getUserName(),
-                serverOffset: 0
+                username: await getUserName(), // Se pasa el usuario al servidor
+                serverOffset: 0 // Sincronización inicial de mensajes
             }
         });
 
+        // Obtiene referencias a los elementos del DOM
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
 
-        
+        /**
+         * Maneja la recepción de nuevos mensajes desde el servidor.
+         * Agrega el mensaje al listado en la interfaz.
+         */
         socket.on('chat message', (msg, serverOffset, username) => {
             const item = `<li>
                     <p>${msg.message}</p>
                     <small>${username}</small>
                 </li>`;
             messages.insertAdjacentHTML('beforeend', item);
+
+            // Actualiza el offset del servidor para evitar duplicados
             socket.auth.serverOffset = serverOffset;
+            
+            // Desplaza automáticamente hacia el final
             messages.scrollTop = messages.scrollHeight;
         });
 
+        /**
+         * Maneja el envío de un nuevo mensaje por el usuario.
+         * Evita que se recargue la página y envía el mensaje vía Socket.IO.
+         */
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             if (input.value) {
@@ -53,10 +75,12 @@
                     message: input.value,
                     username: socket.auth.username
                 });
+                input.value = ''; // Limpia el campo de entrada después de enviar
             }
         });
-
     </script>
+
+    <!-- Estilos CSS para la interfaz del chat -->
     <style>
         *,
         *::before,
@@ -138,12 +162,16 @@
         #form > button:hover {
             background: #0cf;
         }
-
     </style>
 </head>
-<body>    
+
+<body>
+    <!-- Contenedor del chat -->    
     <section id="chat">
+        <!-- Lista de mensajes -->
         <ul id="messages"></ul>
+
+        <!-- Formulario para escribir y enviar mensajes -->
         <form id="form">
             <input type="text" name="message" id="input" placeholder="Escribe tu mensaje" autocomplete="off"/>
             <button type="submit">Enviar</button>
