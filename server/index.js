@@ -18,7 +18,7 @@ const server= createServer(app);
  */
 const io = new Server(server, {
     connectionStateRecovery:{
-      // Opcional: permite a los clientes reconectarse y recuperar mensajes perdidos
+      // Permite a los clientes reconectarse y recuperar mensajes perdidos
     }
 
 });
